@@ -19,12 +19,11 @@ server = smtplib.SMTP_SSL(smtp_ssl_host, smtp_ssl_port)
 # fazer login nele
 server.login(username, password)
 
-MAIL_MESSAGE_BODY = 'Olá {}! Sentimos sua falta!\n Preparamos as melhores promoções para você, dos itens que você mais gosta!\n Acesse site.com.br/produtos para saber mais.'
-
 ARCHIVE_NAME = 'clientes_filtrados.csv'
 
 try:
     clientes_archive = open(ARCHIVE_NAME)
+    email_message = open('message.txt', 'r')
 except FileNotFoundError as e:
     print(e)
     exit()
@@ -35,16 +34,29 @@ rowsClientes = []
 for row in rowsClientesCsv:
     rowsClientes.append(row)
 
+email_message_all = []
+for row in email_message:
+    email_message_all.append(row)
+
+message_subject = email_message_all[0]
+message_body = ''
+for line in email_message_all[1:]:
+    message_body += line+'\n'
+
+
 #Percorrendo array e eenviando emails
 for row in rowsClientes[1:]:
     # a biblioteca email possuí vários templates
     # para diferentes formatos de mensagem
     # neste caso usaremos MIMEText para enviar
     # somente texto
-    message = MIMEText(MAIL_MESSAGE_BODY.format(row[1]), 'plain', 'utf-8')
-    message['subject'] = 'Estamos com saudades'
+    print("Enviando email para " + row[2])
+    message = MIMEText(message_body.format(row[1]), 'plain', 'utf8')
+    message['subject'] = message_subject
     message['from'] = from_addr
     message['to'] = row[2]
     server.sendmail(from_addr, row[2], message.as_string())
 
 server.quit()
+clientes_archive.close()
+email_message.close()
